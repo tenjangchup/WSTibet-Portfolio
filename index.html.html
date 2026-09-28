@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WSTibet Portfolio Hub</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#151e2e',
+                            950: '#0b0f17'
+                        },
+                        emerald: {
+                            500: '#10b981',
+                            400: '#34d399'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f17;
+            color: #f1f5f9;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0f17;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+
+    <!-- Top Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+            
+            <!-- Logo Branding -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center p-1.5 shadow-lg shadow-emerald-500/10">
+                    <!-- SVG WSTibet Logo -->
+                    <svg viewBox="0 0 200 200" class="w-full h-full">
+                        <!-- Chart Bars -->
+                        <rect x="25" y="110" width="28" height="60" rx="4" fill="#10b981" />
+                        <rect x="75" y="70" width="28" height="100" rx="4" fill="#10b981" />
+                        <rect x="125" y="30" width="28" height="140" rx="4" fill="#10b981" />
+                        <!-- Ascending Arrow Line -->
+                        <path d="M 10 160 L 75 110 L 115 135 L 185 50" fill="none" stroke="#10b981" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+                        <polygon points="185,30 195,65 160,55" fill="#10b981" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                        WSTibet
+                    </h1>
+                    <p class="text-xs text-slate-300 font-medium tracking-wide">Portfolio Hub</p>
+                </div>
+            </div>
+
+            <!-- Header Action Controls -->
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <!-- Live Auto-Sync Status Badge -->
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-800/40 text-emerald-400 text-xs font-semibold">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span>Auto Sync On</span>
+                    <span id="lastSyncTime" class="text-[10px] text-emerald-300/70 ml-1"></span>
+                </div>
+
+                <!-- Security & Cloud Settings Button -->
+                <button onclick="openSecurityModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-medium transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-shield-halved text-indigo-400"></i>
+                    <span>Security</span>
+                </button>
+
+                <!-- Data Import / Export Buttons -->
+                <div class="flex items-center bg-slate-800/80 border border-slate-700 rounded-lg p-0.5">
+                    <button onclick="exportData()" title="Export Portfolio Backup" class="px-2.5 py-1 text-slate-300 hover:text-white text-xs font-medium transition-colors">
+                        <i class="fa-solid fa-download mr-1"></i> Export
+                    </button>
+                    <div class="w-px h-3 bg-slate-700"></div>
+                    <label class="px-2.5 py-1 text-slate-300 hover:text-white text-xs font-medium cursor-pointer transition-colors">
+                        <i class="fa-solid fa-upload mr-1"></i> Import
+                        <input type="file" id="importFileInput" accept=".json" onchange="importData(event)" class="hidden">
+                    </label>
+                </div>
+
+                <!-- Add Asset Button -->
+                <button onclick="openHoldingModal()" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/20 flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus text-xs"></i> Add Asset
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Top Metrics Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- Card 1: Total Net Worth -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden group">
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl group-hover:bg-emerald-500/10 transition-all"></div>
+                <div class="flex items-center justify-between text-slate-400 mb-2">
+                    <span class="text-xs font-semibold uppercase tracking-wider">Group Net Worth</span>
+                    <i class="fa-solid fa-vault text-emerald-400"></i>
+                </div>
+                <div id="totalNetWorth" class="text-2xl sm:text-3xl font-black text-white tracking-tight">$0.00</div>
+                <div class="mt-2 flex items-center gap-2 text-xs">
+                    <span id="totalProfitLoss" class="font-bold text-slate-400">$0.00 (0.00%)</span>
+                    <span class="text-slate-300">Unrealized</span>
+                </div>
+            </div>
+
+            <!-- Card 2: Total Members & Holdings -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden group">
+                <div class="flex items-center justify-between text-slate-400 mb-2">
+                    <span class="text-xs font-semibold uppercase tracking-wider">Group Size</span>
+                    <i class="fa-solid fa-users text-indigo-400"></i>
+                </div>
+                <div id="groupMemberCount" class="text-2xl sm:text-3xl font-black text-white tracking-tight">0 Members</div>
+                <div class="mt-2 text-xs text-slate-300">
+                    <span id="totalHoldingsCount" class="font-semibold text-slate-200">0 Assets</span> tracked in total
+                </div>
+            </div>
+
+            <!-- Card 3: Asset Class Allocation -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden group">
+                <div class="flex items-center justify-between text-slate-400 mb-2">
+                    <span class="text-xs font-semibold uppercase tracking-wider">Asset Distribution</span>
+                    <i class="fa-solid fa-chart-pie text-cyan-400"></i>
+                </div>
+                <div class="space-y-1.5 mt-1">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-300 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Stocks</span>
+                        <span id="stockAllocPct" class="font-bold text-slate-200">0%</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-300 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-400"></span> Crypto</span>
+                        <span id="cryptoAllocPct" class="font-bold text-slate-200">0%</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-300 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Cash/Other</span>
+                        <span id="cashAllocPct" class="font-bold text-slate-200">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Largest Group Asset Position -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden group">
+                <div class="flex items-center justify-between text-slate-400 mb-2">
+                    <span class="text-xs font-semibold uppercase tracking-wider">Largest Group Asset</span>
+                    <i class="fa-solid fa-trophy text-amber-400"></i>
+                </div>
+                <div id="largestAssetSymbol" class="text-2xl font-black text-amber-400 tracking-tight">--</div>
+                <div class="mt-2 text-xs text-slate-300 flex items-center justify-between">
+                    <span id="largestAssetValue" class="font-bold text-slate-200">$0.00</span>
+                    <span id="largestAssetPct" class="text-amber-400/90 font-bold">0% of Group</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart & View Controls Header -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-800/80">
+                <div>
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-emerald-400"></i>
+                        Group Portfolio Directory
+                    </h2>
+                    <p class="text-xs text-slate-400">Track and manage asset allocations across all team members</p>
+                </div>
+
+                <!-- View Switcher Tabs -->
+                <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
+                    <button id="viewTableBtn" onclick="switchView('table')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-emerald-600 text-white shadow-md">
+                        <i class="fa-solid fa-list mr-1.5"></i> All Holdings
+                    </button>
+                    <button id="viewMembersBtn" onclick="switchView('members')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-user-group mr-1.5"></i> By Member
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filters & Search Bar -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                    <input type="text" id="searchInput" oninput="renderDashboard()" placeholder="Search ticker, asset or member..." class="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors">
+                </div>
+
+                <div>
+                    <select id="categoryFilter" onchange="renderDashboard()" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-emerald-500 transition-colors">
+                        <option value="ALL">All Categories</option>
+                        <option value="Stock">Stocks / ETFs</option>
+                        <option value="Crypto">Crypto</option>
+                        <option value="Cash">Cash / Gold / Other</option>
+                    </select>
+                </div>
+
+                <div>
+                    <select id="sortBy" onchange="renderDashboard()" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-emerald-500 transition-colors">
+                        <option value="valDesc">Value: High to Low</option>
+                        <option value="valAsc">Value: Low to High</option>
+                        <option value="pnlDesc">Profit: High to Low</option>
+                        <option value="member">Sort by Member</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 1: All Holdings Table -->
+        <div id="tableViewContainer" class="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-950/80 border-b border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                            <th class="py-3.5 px-4">Member</th>
+                            <th class="py-3.5 px-4">Asset</th>
+                            <th class="py-3.5 px-4">Category</th>
+                            <th class="py-3.5 px-4 text-right">Holdings</th>
+                            <th class="py-3.5 px-4 text-right">Avg Cost</th>
+                            <th class="py-3.5 px-4 text-right">Current Price</th>
+                            <th class="py-3.5 px-4 text-right">Total Value</th>
+                            <th class="py-3.5 px-4 text-right">Profit / Loss</th>
+                            <th class="py-3.5 px-4 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="holdingsTableBody" class="divide-y divide-slate-800/60 text-xs">
+                        <!-- JS Dynamic Rows -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="emptyTableMessage" class="hidden p-8 text-center text-slate-500 text-xs">
+                <i class="fa-solid fa-folder-open text-3xl mb-2 block opacity-40"></i>
+                No holdings found matching your criteria. Click <b>Add Asset</b> to start tracking.
+            </div>
+        </div>
+
+        <!-- VIEW 2: By Member Cards View -->
+        <div id="membersViewContainer" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- JS Dynamic Member Cards -->
+        </div>
+
+    </main>
+
+    <!-- Add / Edit Asset Modal -->
+    <div id="holdingModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
+                <h3 id="modalTitle" class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-emerald-400"></i> Add Asset Position
+                </h3>
+                <button onclick="closeHoldingModal()" class="text-slate-400 hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="holdingForm" onsubmit="saveHolding(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="holdingId">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-slate-400 font-medium mb-1">Member Name</label>
+                        <input type="text" id="memberInput" required placeholder="e.g. Tenzin, Dorjee" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-medium mb-1">Category</label>
+                        <select id="categoryInput" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500">
+                            <option value="Stock">Stock / ETF</option>
+                            <option value="Crypto">Cryptocurrency</option>
+                            <option value="Cash">Cash / Fixed Income</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-slate-400 font-medium mb-1">Asset Symbol / Ticker</label>
+                        <input type="text" id="symbolInput" required placeholder="e.g. NVDA, BTC, AAPL" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 uppercase focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-medium mb-1">Asset Full Name</label>
+                        <input type="text" id="nameInput" required placeholder="e.g. Nvidia, Bitcoin" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-slate-400 font-medium mb-1">Quantity</label>
+                        <input type="number" step="any" id="quantityInput" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 font-medium mb-1">Buy Price ($)</label>
+                        <input type="number" step="any" id="buyPriceInput" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-slate-400 font-medium">Current ($)</label>
+                            <button type="button" onclick="fetchLiveQuoteSingle()" class="text-[10px] text-emerald-400 hover:underline">⚡ Live</button>
+                        </div>
+                        <input type="number" step="any" id="currentPriceInput" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-800 flex justify-end gap-2">
+                    <button type="button" onclick="closeHoldingModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20">Save Holding</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Member Breakdown Detailed Modal -->
+    <div id="memberModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative max-h-[90vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
+                <div class="flex items-center gap-3">
+                    <div id="memberModalAvatar" class="w-10 h-10 rounded-full bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 font-bold flex items-center justify-center text-lg">
+                        ?
+                    </div>
+                    <div>
+                        <h3 id="memberModalName" class="text-lg font-bold text-white">Member Portfolio</h3>
+                        <p id="memberModalSubtitle" class="text-xs text-slate-400">Individual member holdings breakdown</p>
+                    </div>
+                </div>
+                <button onclick="closeMemberModal()" class="text-slate-400 hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="space-y-4 overflow-y-auto pr-1 flex-1">
+                <div class="grid grid-cols-2 gap-3 bg-slate-950 p-4 rounded-xl border border-slate-800/80">
+                    <div>
+                        <span class="text-[11px] text-slate-400 block font-semibold uppercase">Total Portfolio Value</span>
+                        <span id="memberModalNetWorth" class="text-xl font-black text-white">$0.00</span>
+                    </div>
+                    <div>
+                        <span class="text-[11px] text-slate-400 block font-semibold uppercase">Unrealized Gain / Loss</span>
+                        <span id="memberModalPnL" class="text-xl font-bold text-slate-300">$0.00</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Member Assets</h4>
+                    <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-900 border-b border-slate-800 text-[10px] font-bold text-slate-400 uppercase">
+                                    <th class="p-2.5">Asset</th>
+                                    <th class="p-2.5 text-right">Holdings</th>
+                                    <th class="p-2.5 text-right">Current Price</th>
+                                    <th class="p-2.5 text-right">Total Value</th>
+                                    <th class="p-2.5 text-right">Profit / Loss</th>
+                                </tr>
+                            </thead>
+                            <tbody id="memberModalAssetsBody" class="divide-y divide-slate-800/60">
+                                <!-- Dynamic JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="pt-4 border-t border-slate-800 mt-4 flex items-center justify-between">
+                <button onclick="addHoldingForCurrentMember()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-md shadow-emerald-600/20">
+                    <i class="fa-solid fa-plus text-[10px] mr-1"></i> Add Asset For This Member
+                </button>
+                <button onclick="closeMemberModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs rounded-xl">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security & Cloud Room Modal -->
+    <div id="securityModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-indigo-400"></i> Vault Security & Cloud
+                </h3>
+                <button onclick="closeSecurityModal()" class="text-slate-400 hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block text-slate-400 font-semibold uppercase text-[10px] mb-1">Vault Passcode Lock</label>
+                    <p class="text-slate-400 mb-2">Set a local secret passcode to protect your portfolio dashboard.</p>
+                    <div class="flex gap-2">
+                        <input type="password" id="setPinInput" placeholder="Enter new passcode" class="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-indigo-500">
+                        <button onclick="saveGroupPin()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl">Set PIN</button>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-4 border-t border-slate-800 mt-5 flex justify-end">
+                <button onclick="closeSecurityModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var holdings = [];
+        let currentView = 'table';
+        let activeMemberDetail = null;
+
+        const SAMPLE_HOLDINGS = [
+            { id: '1', member: 'Tenzin', category: 'Stock', symbol: 'NVDA', name: 'Nvidia Corp', quantity: 25, buyPrice: 110.00, currentPrice: 130.50 },
+            { id: '2', member: 'Tenzin', category: 'Crypto', symbol: 'BTC', name: 'Bitcoin', quantity: 0.45, buyPrice: 58000.00, currentPrice: 63500.00 },
+            { id: '3', member: 'Dorjee', category: 'Stock', symbol: 'AAPL', name: 'Apple Inc', quantity: 40, buyPrice: 190.00, currentPrice: 225.00 },
+            { id: '4', member: 'Dorjee', category: 'Crypto', symbol: 'ETH', name: 'Ethereum', quantity: 3.5, buyPrice: 2400.00, currentPrice: 2650.00 },
+            { id: '5', member: 'Pema', category: 'Stock', symbol: 'MSFT', name: 'Microsoft Corp', quantity: 15, buyPrice: 390.00, currentPrice: 428.00 },
+            { id: '6', member: 'Pema', category: 'Cash', symbol: 'USD', name: 'High Yield Savings', quantity: 5000, buyPrice: 1.00, currentPrice: 1.00 }
+        ];
+
+        const CRYPTO_MAP = {
+            'BTC': 'bitcoin',
+            'ETH': 'ethereum',
+            'SOL': 'solana',
+            'BNB': 'binancecoin',
+            'XRP': 'ripple',
+            'ADA': 'cardano',
+            'DOGE': 'dogecoin',
+            'AVAX': 'avalanche-2'
+        };
+
+        function formatUSD(num) {
+            if (num === undefined || num === null || isNaN(num)) return '$0.00';
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(num);
+        }
+
+        function loadStorage() {
+            const saved = localStorage.getItem('wstibet_holdings');
+            if (saved) {
+                try {
+                    holdings = JSON.parse(saved);
+                } catch (e) {
+                    holdings = [...SAMPLE_HOLDINGS];
+                }
+            } else {
+                holdings = [...SAMPLE_HOLDINGS];
+                saveStorage();
+            }
+        }
+
+        function saveStorage() {
+            localStorage.setItem('wstibet_holdings', JSON.stringify(holdings));
+        }
+
+        function calculateMetrics() {
+            let totalValue = 0;
+            let totalCost = 0;
+            let stockVal = 0;
+            let cryptoVal = 0;
+            let cashVal = 0;
+
+            const memberSet = new Set();
+            const assetTotals = {};
+
+            holdings.forEach(h => {
+                const qty = Number(h.quantity) || 0;
+                const buy = Number(h.buyPrice) || 0;
+                const curr = Number(h.currentPrice) || 0;
+                const val = qty * curr;
+                const cost = qty * buy;
+
+                totalValue += val;
+                totalCost += cost;
+
+                if (h.member) memberSet.add(h.member.trim());
+
+                if (h.category === 'Stock') stockVal += val;
+                else if (h.category === 'Crypto') cryptoVal += val;
+                else cashVal += val;
+
+                // Group-wide asset aggregation
+                const sym = (h.symbol || 'OTHER').toUpperCase();
+                if (!assetTotals[sym]) {
+                    assetTotals[sym] = { symbol: sym, name: h.name, totalVal: 0 };
+                }
+                assetTotals[sym].totalVal += val;
+            });
+
+            const totalPnL = totalValue - totalCost;
+            const pnlPct = totalCost > 0 ? (totalPnL / totalCost) * 100 : 0;
+
+            // DOM Updates
+            document.getElementById('totalNetWorth').innerText = formatUSD(totalValue);
+            const pnlElem = document.getElementById('totalProfitLoss');
+            pnlElem.innerText = `${formatUSD(totalPnL)} (${pnlPct.toFixed(2)}%)`;
+            pnlElem.className = `font-bold ${totalPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+            document.getElementById('groupMemberCount').innerText = `${memberSet.size} Members`;
+            document.getElementById('totalHoldingsCount').innerText = `${holdings.length} Assets`;
+
+            // Allocation Percentages
+            const sPct = totalValue > 0 ? ((stockVal / totalValue) * 100).toFixed(1) : '0';
+            const cPct = totalValue > 0 ? ((cryptoVal / totalValue) * 100).toFixed(1) : '0';
+            const caPct = totalValue > 0 ? ((cashVal / totalValue) * 100).toFixed(1) : '0';
+
+            document.getElementById('stockAllocPct').innerText = `${sPct}%`;
+            document.getElementById('cryptoAllocPct').innerText = `${cPct}%`;
+            document.getElementById('cashAllocPct').innerText = `${caPct}%`;
+
+            // Largest Group Asset Calculation
+            let largestAsset = null;
+            let maxAssetVal = -1;
+            Object.values(assetTotals).forEach(item => {
+                if (item.totalVal > maxAssetVal) {
+                    maxAssetVal = item.totalVal;
+                    largestAsset = item;
+                }
+            });
+
+            if (largestAsset && totalValue > 0) {
+                document.getElementById('largestAssetSymbol').innerText = largestAsset.symbol;
+                document.getElementById('largestAssetValue').innerText = formatUSD(largestAsset.totalVal);
+                const share = ((largestAsset.totalVal / totalValue) * 100).toFixed(1);
+                document.getElementById('largestAssetPct').innerText = `${share}% of Group`;
+            } else {
+                document.getElementById('largestAssetSymbol').innerText = '--';
+                document.getElementById('largestAssetValue').innerText = '$0.00';
+                document.getElementById('largestAssetPct').innerText = '0% of Group';
+            }
+        }
+
+        function renderDashboard() {
+            calculateMetrics();
+            if (currentView === 'table') {
+                renderTable();
+            } else {
+                renderMembersView();
+            }
+        }
+
+        function filterHoldings() {
+            const query = (document.getElementById('searchInput').value || '').toLowerCase();
+            const cat = document.getElementById('categoryFilter').value;
+            const sort = document.getElementById('sortBy').value;
+
+            let result = holdings.filter(h => {
+                const matchSearch = h.member.toLowerCase().includes(query) ||
+                                    h.symbol.toLowerCase().includes(query) ||
+                                    h.name.toLowerCase().includes(query);
+                const matchCat = cat === 'ALL' || h.category === cat;
+                return matchSearch && matchCat;
+            });
+
+            result.sort((a, b) => {
+                const valA = (a.quantity || 0) * (a.currentPrice || 0);
+                const valB = (b.quantity || 0) * (b.currentPrice || 0);
+                const pnlA = valA - ((a.quantity || 0) * (a.buyPrice || 0));
+                const pnlB = valB - ((b.quantity || 0) * (b.buyPrice || 0));
+
+                if (sort === 'valDesc') return valB - valA;
+                if (sort === 'valAsc') return valA - valB;
+                if (sort === 'pnlDesc') return pnlB - pnlA;
+                if (sort === 'member') return a.member.localeCompare(b.member);
+                return 0;
+            });
+
+            return result;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('holdingsTableBody');
+            const emptyMsg = document.getElementById('emptyTableMessage');
+            const filtered = filterHoldings();
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                emptyMsg.classList.remove('hidden');
+                return;
+            }
+            emptyMsg.classList.add('hidden');
+
+            tbody.innerHTML = filtered.map(h => {
+                const val = h.quantity * h.currentPrice;
+                const cost = h.quantity * h.buyPrice;
+                const pnl = val - cost;
+                const pnlPct = cost > 0 ? (pnl / cost) * 100 : 0;
+                const isPositive = pnl >= 0;
+
+                return `
+                    <tr class="hover:bg-slate-800/40 transition-colors">
+                        <td class="py-3 px-4 font-semibold text-white">
+                            <button onclick="openMemberModal('${h.member}')" class="hover:underline flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-full bg-slate-800 text-emerald-400 text-[10px] flex items-center justify-center font-bold">
+                                    ${h.member.charAt(0).toUpperCase()}
+                                </span>
+                                <span>${h.member}</span>
+                            </button>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="font-bold text-slate-100 uppercase">${h.symbol}</div>
+                            <div class="text-[10px] text-slate-400">${h.name}</div>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-medium ${
+                                h.category === 'Stock' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40' :
+                                h.category === 'Crypto' ? 'bg-indigo-950/60 text-indigo-400 border border-indigo-800/40' :
+                                'bg-amber-950/60 text-amber-400 border border-amber-800/40'
+                            }">
+                                ${h.category}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-right font-medium text-slate-200">${h.quantity}</td>
+                        <td class="py-3 px-4 text-right text-slate-400">${formatUSD(h.buyPrice)}</td>
+                        <td class="py-3 px-4 text-right font-medium text-slate-200">${formatUSD(h.currentPrice)}</td>
+                        <td class="py-3 px-4 text-right font-bold text-white">${formatUSD(val)}</td>
+                        <td class="py-3 px-4 text-right font-bold ${isPositive ? 'text-emerald-400' : 'text-rose-400'}">
+                            ${formatUSD(pnl)}
+                            <div class="text-[10px]">${pnlPct.toFixed(2)}%</div>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <button onclick="editHolding('${h.id}')" class="text-slate-400 hover:text-emerald-400 transition-colors p-1">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button onclick="deleteHolding('${h.id}')" class="text-slate-400 hover:text-rose-400 transition-colors p-1">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderMembersView() {
+            const container = document.getElementById('membersViewContainer');
+            const filtered = filterHoldings();
+
+            // Group by member
+            const memberMap = {};
+            filtered.forEach(h => {
+                if (!memberMap[h.member]) {
+                    memberMap[h.member] = [];
+                }
+                memberMap[h.member].push(h);
+            });
+
+            if (Object.keys(memberMap).length === 0) {
+                container.innerHTML = `<div class="col-span-full p-8 text-center text-slate-500 text-xs">No member data matching filters.</div>`;
+                return;
+            }
+
+            container.innerHTML = Object.entries(memberMap).map(([memberName, memberHoldings]) => {
+                let totalVal = 0;
+                let totalCost = 0;
+                memberHoldings.forEach(h => {
+                    totalVal += h.quantity * h.currentPrice;
+                    totalCost += h.quantity * h.buyPrice;
+                });
+                const pnl = totalVal - totalCost;
+                const pnlPct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
+
+                return `
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl hover:border-slate-700 transition-all cursor-pointer" onclick="openMemberModal('${memberName}')">
+                        <div class="flex items-center justify-between mb-3 pb-3 border-b border-slate-800">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-9 h-9 rounded-full bg-emerald-600/20 text-emerald-400 font-bold flex items-center justify-center text-sm border border-emerald-500/30">
+                                    ${memberName.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-white text-sm">${memberName}</h3>
+                                    <span class="text-[10px] text-slate-400">${memberHoldings.length} Assets</span>
+                                </div>
+                            </div>
+                            <span class="text-xs text-emerald-400 font-semibold hover:underline">View Portfolio &rarr;</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <div>
+                                <span class="text-[10px] text-slate-400 block uppercase font-semibold">Net Worth</span>
+                                <span class="text-base font-bold text-white">${formatUSD(totalVal)}</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-400 block uppercase font-semibold">Total Gain</span>
+                                <span class="text-base font-bold ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatUSD(pnl)}</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1.5 pt-2 border-t border-slate-800/80">
+                            ${memberHoldings.slice(0, 3).map(h => `
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-slate-300 font-medium">${h.symbol} <span class="text-[10px] text-slate-500">x${h.quantity}</span></span>
+                                    <span class="text-slate-100 font-bold">${formatUSD(h.quantity * h.currentPrice)}</span>
+                                </div>
+                            `).join('')}
+                            ${memberHoldings.length > 3 ? `<div class="text-[10px] text-slate-500 font-medium text-right">+${memberHoldings.length - 3} more assets</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openMemberModal(memberName) {
+            activeMemberDetail = memberName;
+            const memberHoldings = holdings.filter(h => h.member === memberName);
+            
+            document.getElementById('memberModalName').innerText = `${memberName}'s Portfolio`;
+            document.getElementById('memberModalAvatar').innerText = memberName.charAt(0).toUpperCase();
+
+            let totalVal = 0;
+            let totalCost = 0;
+            memberHoldings.forEach(h => {
+                totalVal += h.quantity * h.currentPrice;
+                totalCost += h.quantity * h.buyPrice;
+            });
+            const pnl = totalVal - totalCost;
+
+            document.getElementById('memberModalNetWorth').innerText = formatUSD(totalVal);
+            const pnlElem = document.getElementById('memberModalPnL');
+            pnlElem.innerText = formatUSD(pnl);
+            pnlElem.className = `text-xl font-bold ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+            const tbody = document.getElementById('memberModalAssetsBody');
+            tbody.innerHTML = memberHoldings.map(h => {
+                const val = h.quantity * h.currentPrice;
+                const cost = h.quantity * h.buyPrice;
+                const assetPnL = val - cost;
+                return `
+                    <tr class="hover:bg-slate-900/60">
+                        <td class="p-2.5 font-bold text-white">${h.symbol} <span class="text-[10px] font-normal text-slate-400 block">${h.name}</span></td>
+                        <td class="p-2.5 text-right font-medium text-slate-200">${h.quantity}</td>
+                        <td class="p-2.5 text-right text-slate-400">${formatUSD(h.currentPrice)}</td>
+                        <td class="p-2.5 text-right font-bold text-white">${formatUSD(val)}</td>
+                        <td class="p-2.5 text-right font-bold ${assetPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatUSD(assetPnL)}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('memberModal').classList.remove('hidden');
+        }
+
+        function closeMemberModal() {
+            document.getElementById('memberModal').classList.add('hidden');
+        }
+
+        function addHoldingForCurrentMember() {
+            closeMemberModal();
+            openHoldingModal(activeMemberDetail);
+        }
+
+        function switchView(view) {
+            currentView = view;
+            const tableBtn = document.getElementById('viewTableBtn');
+            const membersBtn = document.getElementById('viewMembersBtn');
+            const tableView = document.getElementById('tableViewContainer');
+            const membersView = document.getElementById('membersViewContainer');
+
+            if (view === 'table') {
+                tableBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-emerald-600 text-white shadow-md";
+                membersBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-400 hover:text-white";
+                tableView.classList.remove('hidden');
+                membersView.classList.add('hidden');
+            } else {
+                membersBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-emerald-600 text-white shadow-md";
+                tableBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-400 hover:text-white";
+                membersView.classList.remove('hidden');
+                tableView.classList.add('hidden');
+            }
+            renderDashboard();
+        }
+
+        function openHoldingModal(presetMember = '') {
+            document.getElementById('holdingId').value = '';
+            document.getElementById('holdingForm').reset();
+            if (presetMember) {
+                document.getElementById('memberInput').value = presetMember;
+            }
+            document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-plus-circle text-emerald-400"></i> Add Asset Position';
+            document.getElementById('holdingModal').classList.remove('hidden');
+        }
+
+        function closeHoldingModal() {
+            document.getElementById('holdingModal').classList.add('hidden');
+        }
+
+        function saveHolding(e) {
+            e.preventDefault();
+            const id = document.getElementById('holdingId').value || String(Date.now());
+            const member = document.getElementById('memberInput').value.trim();
+            const category = document.getElementById('categoryInput').value;
+            const symbol = document.getElementById('symbolInput').value.trim().toUpperCase();
+            const name = document.getElementById('nameInput').value.trim();
+            const quantity = parseFloat(document.getElementById('quantityInput').value) || 0;
+            const buyPrice = parseFloat(document.getElementById('buyPriceInput').value) || 0;
+            const currentPrice = parseFloat(document.getElementById('currentPriceInput').value) || buyPrice;
+
+            const existingIndex = holdings.findIndex(h => h.id === id);
+            const newHolding = { id, member, category, symbol, name, quantity, buyPrice, currentPrice };
+
+            if (existingIndex >= 0) {
+                holdings[existingIndex] = newHolding;
+            } else {
+                holdings.push(newHolding);
+            }
+
+            saveStorage();
+            closeHoldingModal();
+            renderDashboard();
+        }
+
+        function editHolding(id) {
+            const h = holdings.find(item => item.id === id);
+            if (!h) return;
+
+            document.getElementById('holdingId').value = h.id;
+            document.getElementById('memberInput').value = h.member;
+            document.getElementById('categoryInput').value = h.category;
+            document.getElementById('symbolInput').value = h.symbol;
+            document.getElementById('nameInput').value = h.name;
+            document.getElementById('quantityInput').value = h.quantity;
+            document.getElementById('buyPriceInput').value = h.buyPrice;
+            document.getElementById('currentPriceInput').value = h.currentPrice;
+
+            document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-pen-to-square text-emerald-400"></i> Edit Asset Position';
+            document.getElementById('holdingModal').classList.remove('hidden');
+        }
+
+        function deleteHolding(id) {
+            if (confirm('Are you sure you want to remove this position?')) {
+                holdings = holdings.filter(h => h.id !== id);
+                saveStorage();
+                renderDashboard();
+            }
+        }
+
+        async function fetchLiveQuoteSingle() {
+            const symbol = document.getElementById('symbolInput').value.trim().toUpperCase();
+            const category = document.getElementById('categoryInput').value;
+            if (!symbol) return alert('Please enter a symbol first');
+
+            try {
+                if (category === 'Crypto') {
+                    const coinId = CRYPTO_MAP[symbol] || symbol.toLowerCase();
+                    const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`);
+                    const data = await res.json();
+                    if (data[coinId] && data[coinId].usd) {
+                        document.getElementById('currentPriceInput').value = data[coinId].usd;
+                    }
+                } else if (category === 'Stock') {
+                    const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`);
+                    const data = await res.json();
+                    const price = data.chart.result[0].meta.regularMarketPrice;
+                    if (price) {
+                        document.getElementById('currentPriceInput').value = price;
+                    }
+                }
+            } catch (err) {
+                console.log('Live price fetch fallback used or failed:', err);
+            }
+        }
+
+        async function syncLivePrices() {
+            const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('lastSyncTime').innerText = `Updated ${now}`;
+
+            for (let h of holdings) {
+                try {
+                    if (h.category === 'Crypto') {
+                        const coinId = CRYPTO_MAP[h.symbol.toUpperCase()] || h.symbol.toLowerCase();
+                        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`);
+                        const data = await res.json();
+                        if (data[coinId] && data[coinId].usd) {
+                            h.currentPrice = data[coinId].usd;
+                        }
+                    }
+                } catch (e) {
+                    // Suppress API errors during auto background poll
+                }
+            }
+            saveStorage();
+            renderDashboard();
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(holdings, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `wstibet_portfolio_backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importData(event) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        holdings = imported;
+                        saveStorage();
+                        renderDashboard();
+                        alert('Portfolio successfully imported!');
+                    }
+                } catch (err) {
+                    alert('Invalid JSON backup file.');
+                }
+            };
+            if (event.target.files[0]) {
+                reader.readAsText(event.target.files[0]);
+            }
+        }
+
+        function openSecurityModal() {
+            document.getElementById('securityModal').classList.remove('hidden');
+        }
+
+        function closeSecurityModal() {
+            document.getElementById('securityModal').classList.add('hidden');
+        }
+
+        function saveGroupPin() {
+            const pin = document.getElementById('setPinInput').value;
+            if (pin) {
+                localStorage.setItem('wstibet_pin', pin);
+                alert('Vault Passcode set!');
+                closeSecurityModal();
+            }
+        }
+
+        window.onload = function() {
+            loadStorage();
+            renderDashboard();
+
+            // Background Price Sync every 30s
+            syncLivePrices();
+            setInterval(syncLivePrices, 30000);
+        };
+    </script>
+</body>
+</html>
